@@ -209,6 +209,22 @@ Stop cascading at any level where the subfolder description is unchanged.
 
 ---
 
+## Audit & Todo System
+
+Three commands extend the skill with a persistent, prioritized issue tracker:
+
+| Command | Purpose |
+|---------|---------|
+| `/context-manager:audit` | Scan the project for stale context, missing context, WIP entries, and latent code issues. Writes findings to `.claude/context-manager-todos.json` ranked by priority, then offers to start resolving. |
+| `/context-manager:audit-resolve` | Pick up the highest-priority unfinished todo and resolve it. Can be run anytime — resumes from where the last session left off. |
+| `/context-manager:audit-clean` | Remove all DONE items from the todo list. |
+
+**Todo file:** `.claude/context-manager-todos.json` — persists across sessions. Each item has an `id`, `priority` (1 = highest), `category`, `severity`, `path`, `title`, `description`, `recommendation`, `status` (PENDING / IN_PROGRESS / DONE), and `resolved_at`.
+
+The audit runs a two-pass scan: Phase 1 reads only `.folder-context.md` metadata to detect stale context, missing context, WIP entries, and suspicious Key logic sections. Phase 2 reads the actual source files only for items flagged in Phase 1.
+
+---
+
 ## Common Mistakes
 
 | Mistake | Fix |
