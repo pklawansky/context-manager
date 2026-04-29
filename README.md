@@ -21,19 +21,98 @@ The result:
 
 ## Installation
 
-### 1. Install the skill into Claude Code
+### Prerequisites
 
-This skill is distributed as a Claude Code plugin. Add it to your global Claude Code plugins by running:
+**1. Install Claude Code**
+
+Claude Code is Anthropic's official CLI for interacting with Claude directly in your terminal and editor. Install it via npm:
 
 ```bash
-claude plugin add https://github.com/pklawansky/context-manager
+npm install -g @anthropic-ai/claude-code
 ```
 
-After installing, the `context-manager` skill will be available in all your Claude Code sessions.
+Then log in:
 
-### 2. Activate in a project
+```bash
+claude
+```
 
-Open Claude Code in your project and invoke the skill:
+This opens a browser to authenticate with your Anthropic account. Once complete, you can run `claude` in any project directory to start a session.
+
+> If you already have Claude Code installed, make sure it's up to date before proceeding:
+> ```bash
+> npm update -g @anthropic-ai/claude-code
+> ```
+> The `/plugin` command required below was added in a recent version. If you see "unknown command" when running `/plugin`, update first.
+
+---
+
+**2. Have Python 3 available**
+
+The hook script that keeps context files current is written in Python. Verify it's installed:
+
+```bash
+python3 --version
+```
+
+If not installed, download it from [python.org](https://www.python.org/downloads/) or use your system package manager (`brew install python3`, `apt install python3`, etc.).
+
+---
+
+### Step 1: Register this repo as a plugin source (one time)
+
+Claude Code's plugin system works in two steps: first you register a GitHub repo as a *marketplace* (a source of plugins), then you install individual plugins from it.
+
+Inside a Claude Code session, run:
+
+```
+/plugin marketplace add pklawansky/context-manager
+```
+
+This tells Claude Code where to find the plugin. You only need to do this once — the marketplace registration persists across all sessions and projects.
+
+---
+
+### Step 2: Install the plugin
+
+```
+/plugin install context-manager@pklawansky-context-manager
+```
+
+This downloads the plugin and makes the `context-manager` skill available globally in all your Claude Code sessions.
+
+---
+
+### Step 3: Reload plugins
+
+```
+/reload-plugins
+```
+
+This activates the newly installed plugin in your current session. After reloading, Claude will confirm the skill is loaded.
+
+---
+
+### Step 4: Verify the installation
+
+```
+/plugin
+```
+
+Navigate to the **Installed** tab. You should see `context-manager` listed. If it appears under errors, check that Python 3 is available in your shell.
+
+---
+
+### Step 5: Activate in a project
+
+Navigate to your project directory and open Claude Code:
+
+```bash
+cd /path/to/your/project
+claude
+```
+
+Then invoke the skill:
 
 ```
 /context-manager
@@ -42,12 +121,25 @@ Open Claude Code in your project and invoke the skill:
 On first run, Claude will:
 
 1. Add `.folder-context.md` to your project's `.gitignore` (creating one if needed)
-2. Install the `mark-context-dirty.py` hook script into `.claude/scripts/`
+2. Copy `mark-context-dirty.py` into `.claude/scripts/` inside your project
 3. Register a `PostToolUse` hook in `.claude/settings.json` that fires after every file write or edit
 4. Walk the entire project tree and generate `.folder-context.md` files for every folder with relevant content
 5. Write `.claude/context-manager.json` to record that initialization is complete
 
-Subsequent invocations detect the marker file and skip re-initialization — invoking the skill again is always safe.
+This initial generation may take a moment on large codebases. Once complete, Claude will confirm and the skill is fully active.
+
+Subsequent invocations detect the marker file and skip re-initialization — invoking `/context-manager` again is always safe.
+
+---
+
+### What gets added to your project
+
+After initialization, two things are added to your project that you should be aware of:
+
+- **`.claude/settings.json`** — adds a hook entry so the dirty-tracking script runs automatically. If you already have a `settings.json`, the hook is merged in; existing settings are preserved.
+- **`.claude/scripts/mark-context-dirty.py`** — the hook script. This file should be committed to your repo so teammates get the same automatic tracking behavior.
+
+The `.folder-context.md` files themselves are added to `.gitignore` — they are local working state, not something to commit.
 
 ---
 
