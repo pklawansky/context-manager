@@ -76,7 +76,7 @@ Despite the name, this command just registers a plugin source — it isn't limit
 ### Step 2: Install the plugin
 
 ```
-/plugin install context-manager@pklawansky-context-manager
+/plugin install context-manager@context-manager
 ```
 
 The `@pklawansky-context-manager` suffix is how Claude Code identifies which registered source to pull from (it converts the `owner/repo` format to `owner-repo`). This downloads the plugin and makes the `context-manager` skill available globally in all your Claude Code sessions.
