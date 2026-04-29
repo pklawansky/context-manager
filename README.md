@@ -313,6 +313,26 @@ The hook script is copied into your project at initialization time. It has no ex
 
 ---
 
+## Updating the plugin
+
+When a new version is pushed to GitHub, update your local installation inside any Claude Code session:
+
+```
+/plugin update context-manager
+```
+
+Then reload to activate the new version in your current session:
+
+```
+/reload-plugins
+```
+
+That's it. Your `.claude/` project files (settings, scripts, todos) are untouched — only the skill definitions are updated.
+
+> **Note for contributors:** Changes to skill files in this repo take effect for all users on their next `/plugin update`. The plugin pulls directly from the `main` branch on GitHub, so merging to `main` is sufficient to ship a new version — there is no separate release or publish step.
+
+---
+
 ## Requirements
 
 - Claude Code with plugin support
