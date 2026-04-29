@@ -1,0 +1,12 @@
+{
+  "name": "context-manager",
+  "description": "Maintains hierarchical context.md files across project folders to reduce codebase loading and track project state across sessions",
+  "plugins": [
+    {
+      "name": "context-manager",
+      "description": "Maintains hierarchical context.md files across project folders to reduce codebase loading and track project state across sessions",
+      "source": "./",
+      "author": "pklaw"
+    }
+  ]
+}
