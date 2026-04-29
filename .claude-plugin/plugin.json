@@ -1,0 +1,8 @@
+{
+  "name": "context-manager",
+  "description": "Maintains hierarchical context.md files across project folders to reduce codebase loading and track project state across sessions",
+  "author": {
+    "name": "pklaw",
+    "email": "pklawansky@gmail.com"
+  }
+}
