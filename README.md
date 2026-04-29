@@ -61,7 +61,7 @@ If not installed, download it from [python.org](https://www.python.org/downloads
 
 ### Step 1: Register this repo as a plugin source (one time)
 
-Claude Code's plugin system works in two steps: first you register a GitHub repo as a *marketplace* (a source of plugins), then you install individual plugins from it.
+Claude Code installs plugins from registered sources. This plugin is hosted directly on GitHub, not on any official marketplace — so you register the GitHub repo itself as a source.
 
 Inside a Claude Code session, run:
 
@@ -69,7 +69,7 @@ Inside a Claude Code session, run:
 /plugin marketplace add pklawansky/context-manager
 ```
 
-This tells Claude Code where to find the plugin. You only need to do this once — the marketplace registration persists across all sessions and projects.
+Despite the name, this command just registers a plugin source — it isn't limited to "official" marketplaces. You only need to do this once; it persists across all sessions and projects.
 
 ---
 
@@ -79,7 +79,7 @@ This tells Claude Code where to find the plugin. You only need to do this once �
 /plugin install context-manager@pklawansky-context-manager
 ```
 
-This downloads the plugin and makes the `context-manager` skill available globally in all your Claude Code sessions.
+The `@pklawansky-context-manager` suffix is how Claude Code identifies which registered source to pull from (it converts the `owner/repo` format to `owner-repo`). This downloads the plugin and makes the `context-manager` skill available globally in all your Claude Code sessions.
 
 ---
 
