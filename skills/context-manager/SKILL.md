@@ -209,19 +209,22 @@ Stop cascading at any level where the subfolder description is unchanged.
 
 ---
 
-## Audit & Todo System
+## Companion Commands
 
-Three commands extend the skill with a persistent, prioritized issue tracker:
+Six commands extend the skill for navigation, health checks, and structured issue resolution:
 
 | Command | Purpose |
 |---------|---------|
-| `/context-manager:audit` | Scan the project for stale context, missing context, WIP entries, and latent code issues. Writes findings to `.claude/context-manager-todos.json` ranked by priority, then offers to start resolving. |
-| `/context-manager:audit-resolve` | Pick up the highest-priority unfinished todo and resolve it. Can be run anytime — resumes from where the last session left off. |
+| `/context-manager:status` | Quick health snapshot — coverage, staleness, WIP count, and open todos. Read-only, no source file reads. |
+| `/context-manager:wip` | Surface all active WIP entries across the project in one list. Resolve or act on them from there. |
+| `/context-manager:search` | Search across all `.folder-context.md` files for a keyword, symbol, or concept without loading source files. |
+| `/context-manager:audit` | Full two-pass scan: metadata sweep for stale/missing/WIP issues, then targeted source reads for code issues. Writes a prioritized todo list to `.claude/context-manager-todos.json`. |
+| `/context-manager:audit-resolve` | Work through the todo list one item at a time, highest priority first. Resumes across sessions via IN_PROGRESS state. |
 | `/context-manager:audit-clean` | Remove all DONE items from the todo list. |
 
 **Todo file:** `.claude/context-manager-todos.json` — persists across sessions. Each item has an `id`, `priority` (1 = highest), `category`, `severity`, `path`, `title`, `description`, `recommendation`, `status` (PENDING / IN_PROGRESS / DONE), and `resolved_at`.
 
-The audit runs a two-pass scan: Phase 1 reads only `.folder-context.md` metadata to detect stale context, missing context, WIP entries, and suspicious Key logic sections. Phase 2 reads the actual source files only for items flagged in Phase 1.
+**Typical workflow:** `status` → `wip` (quick daily use) · `audit` → `audit-resolve` → `audit-clean` (periodic deep pass) · `search` (anytime for navigation).
 
 ---
 

@@ -205,53 +205,76 @@ When starting a task, Claude reads the root `.folder-context.md` first, identifi
 
 ---
 
-## Audit & todo system
+## Companion commands
 
-Beyond keeping context files current, the plugin can audit the entire project and produce a prioritized list of issues to fix — stale context, missing context files, unresolved WIP, and latent code bugs.
+Six commands extend the core skill for navigation, health checks, and structured issue resolution. The core skill runs continuously in the background; these are invoked deliberately.
+
+### `/context-manager:status`
+
+A quick read-only health snapshot. Reads only `.folder-context.md` frontmatter and the todos file — no source files, no repairs. Reports context coverage, staleness, active WIP count, and open todos by severity. Use this to decide whether a full audit is worth running.
+
+```
+Context Manager Status
+
+Coverage:     12 / 14 folders have context  (2 missing)
+Staleness:    3 folders stale
+Active WIP:   2 items
+Open todos:   5  (2 high · 2 medium · 1 low)
+Last audit:   2026-04-29T10:00:00Z
+```
+
+### `/context-manager:wip`
+
+Extracts every active `WIP:` entry from every `.folder-context.md` and surfaces them in one list, sorted root-first. The natural session-start command: "what was I in the middle of?" From the results you can start working on an item or mark it as resolved.
+
+### `/context-manager:search`
+
+Searches across all `.folder-context.md` files — Purpose, Role, Exports, Key logic, WIP, and subfolder descriptions — for a keyword, symbol, or concept. Returns matching folders and file entries with the relevant snippet. No source files are loaded. Useful for "where is X handled?" without knowing which subtree to navigate to.
+
+```
+Search: "authentication"  —  4 matches
+
+src/auth/                          [folder]
+  Handles user authentication, session management, and token validation.
+
+src/auth/auth.ts                   [exports, role]
+  Exports: AuthService, createSession(), validateToken()
+```
 
 ### `/context-manager:audit`
 
-Scans the project in two passes and writes findings to `.claude/context-manager-todos.json`.
+A full two-pass scan. Phase 1 reads every `.folder-context.md` and flags stale context, missing context, active WIP entries, and Key logic sections containing suspicion keywords (`assumes`, `hack`, `unchecked`, `TODO`, `FIXME`, etc.). Phase 2 reads the actual source files for flagged items only, looking for unhandled edge cases, missing error handling, logic bugs, booby traps, and security issues.
 
-**Phase 1 — metadata scan:** Reads every `.folder-context.md` and checks for:
-- **Stale context** — tracked source files modified after the context was last written
-- **Missing context** — folders with source files but no `.folder-context.md`
-- **WIP entries** — files with an active `WIP:` field (escalated to high severity if the text mentions a bug, crash, or security risk)
-- **Suspicious key logic** — descriptions containing phrases like `assumes`, `hack`, `unchecked`, `no validation`, `TODO`, `FIXME`, etc.
-
-**Phase 2 — targeted code read:** For any file flagged in Phase 1, reads the actual source and looks for unhandled edge cases, missing error handling, logic bugs, booby traps, and security issues. Files that weren't flagged are never read.
-
-Each finding is scored by category and severity, ranked, and written as a numbered todo. After the audit, Claude displays the top findings and asks whether to start resolving them immediately.
-
-Re-running `/context-manager:audit` merges results — completed items are preserved, and stale findings for the same path are refreshed.
+Findings are scored and ranked, then written to `.claude/context-manager-todos.json`. Claude displays the top items and asks whether to start resolving immediately. Re-running merges results — completed items are preserved, stale findings for the same path are refreshed.
 
 ### `/context-manager:audit-resolve`
 
-Works through the todo list one item at a time, starting from the highest-priority unfinished item.
-
-- Marks each item `IN_PROGRESS` before starting and `DONE` immediately after — state is written to disk after every step, so a context clear mid-session picks up exactly where it left off
-- Handles each category correctly: applies code fixes and updates `.folder-context.md` for `code_issue` items; regenerates context files for `stale_context` and `missing_context`; reviews whether WIP is still active for `wip_review` items
-- After each fix, asks whether to continue with the next item
-
-Can be invoked directly at any time — not just after an audit — to resume an existing todo list.
+Works through the todo list one item at a time, highest priority first. Marks each item `IN_PROGRESS` before starting and `DONE` immediately after — state is written to disk after every step, so a context clear mid-session resumes cleanly. Can be run at any time to pick up an existing list, not just immediately after an audit.
 
 ### `/context-manager:audit-clean`
 
-Removes all `DONE` items from `.claude/context-manager-todos.json` and reports what was purged. `PENDING` and `IN_PROGRESS` items are left untouched.
+Removes all `DONE` items from `.claude/context-manager-todos.json`. `PENDING` and `IN_PROGRESS` items are left untouched.
 
-### How the audit commands interact with the main skill
+### How they fit together
 
 ```
-/context-manager          — initializes and keeps .folder-context.md files current (runs continuously)
-        │
-        └─▶ /context-manager:audit          — scans metadata, deep-reads flagged files, writes todos
+/context-manager            — initializes; keeps .folder-context.md files current (always running)
+    │
+    ├─▶ :status             — quick health check (read-only)
+    ├─▶ :wip                — surface and resolve active WIP
+    ├─▶ :search <query>     — find where a concept lives
+    │
+    └─▶ :audit              — full scan → writes prioritized todos
+            │
+            └─▶ :audit-resolve   — work through todos one by one
                     │
-                    └─▶ /context-manager:audit-resolve    — resolves todos one by one, updates context files
-                                │
-                                └─▶ /context-manager:audit-clean    — purges completed items
+                    └─▶ :audit-clean   — purge completed items
 ```
 
-The audit commands are additive — the core skill runs continuously and keeps context files fresh. Audit is something you run deliberately when you want a full health check or a structured pass at technical debt.
+**Typical workflows:**
+- **Daily:** `/context-manager:status` → `/context-manager:wip`
+- **Periodic deep pass:** `/context-manager:audit` → `/context-manager:audit-resolve` → `/context-manager:audit-clean`
+- **Discovery:** `/context-manager:search <term>`
 
 ### The todo file
 
@@ -273,7 +296,7 @@ The audit commands are additive — the core skill runs continuously and keeps c
 }
 ```
 
-Status values: `PENDING` → `IN_PROGRESS` → `DONE`. Use `/context-manager:audit-clean` to purge completed items.
+Status values: `PENDING` → `IN_PROGRESS` → `DONE`.
 
 ---
 
@@ -299,8 +322,14 @@ skills/
   context-manager/
     SKILL.md                  # Core skill — initializes and maintains .folder-context.md files
     mark-context-dirty.py     # Hook script installed into .claude/scripts/
+  status/
+    SKILL.md                  # /context-manager:status — quick health snapshot
+  wip/
+    SKILL.md                  # /context-manager:wip — surface and resolve active WIP entries
+  search/
+    SKILL.md                  # /context-manager:search — search context files by keyword or symbol
   audit/
-    SKILL.md                  # /context-manager:audit — scans project, writes prioritized todos
+    SKILL.md                  # /context-manager:audit — full scan, writes prioritized todos
   audit-resolve/
     SKILL.md                  # /context-manager:audit-resolve — works through todos one by one
   audit-clean/
