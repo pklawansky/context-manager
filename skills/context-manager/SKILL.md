@@ -211,20 +211,34 @@ Stop cascading at any level where the subfolder description is unchanged.
 
 ## Companion Commands
 
-Six commands extend the skill for navigation, health checks, and structured issue resolution:
+Nine commands extend the skill for navigation, annotation, health checks, and structured issue resolution:
 
 | Command | Purpose |
 |---------|---------|
-| `/context-manager:status` | Quick health snapshot — coverage, staleness, WIP count, and open todos. Read-only, no source file reads. |
+| `/context-manager:status` | Quick health snapshot — coverage, staleness, WIP count, annotations, and open todos. Read-only. |
 | `/context-manager:wip` | Surface all active WIP entries across the project in one list. Resolve or act on them from there. |
-| `/context-manager:search` | Search across all `.folder-context.md` files for a keyword, symbol, or concept without loading source files. |
+| `/context-manager:search` | Search across all `.folder-context.md` files and annotations for a keyword, symbol, or concept. |
+| `/context-manager:brief` | Synthesise the context tree into a readable prose overview — architecture, WIP, open issues, and annotations. |
+| `/context-manager:annotate` | Add, edit, remove, or list persistent human notes on files and folders. Notes survive regeneration. |
+| `/context-manager:repair` | Regenerate only stale or missing context files. Also flags orphaned annotations. Lightweight alternative to a full audit. |
 | `/context-manager:audit` | Full two-pass scan: metadata sweep for stale/missing/WIP issues, then targeted source reads for code issues. Writes a prioritized todo list to `.claude/context-manager-todos.json`. |
 | `/context-manager:audit-resolve` | Work through the todo list one item at a time, highest priority first. Resumes across sessions via IN_PROGRESS state. |
 | `/context-manager:audit-clean` | Remove all DONE items from the todo list. |
 
-**Todo file:** `.claude/context-manager-todos.json` — persists across sessions. Each item has an `id`, `priority` (1 = highest), `category`, `severity`, `path`, `title`, `description`, `recommendation`, `status` (PENDING / IN_PROGRESS / DONE), and `resolved_at`.
+**Persistent files** (all in `.claude/`, never committed):
+- `.claude/context-manager.json` — init state
+- `.claude/context-manager-todos.json` — prioritized issue list from audit
+- `.claude/context-annotations.json` — human and Claude-authored notes on files and folders
 
-**Typical workflow:** `status` → `wip` (quick daily use) · `audit` → `audit-resolve` → `audit-clean` (periodic deep pass) · `search` (anytime for navigation).
+**Annotations** surface across all skills: search includes annotation text, brief includes them under module descriptions, audit notes them alongside findings, repair flags orphans when annotated paths are deleted.
+
+**Typical workflows:**
+- Daily: `status` → `wip`
+- Periodic deep pass: `audit` → `audit-resolve` → `audit-clean`
+- Navigation: `search`
+- Onboarding / session start: `brief`
+- Institutional knowledge: `annotate`
+- After many edits without Claude: `repair`
 
 ---
 
