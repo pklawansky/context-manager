@@ -114,7 +114,7 @@ Write `.claude/context-manager.json`:
 **After every Write, Edit, or NotebookEdit tool call**, immediately:
 
 1. **Classify the file**: if it is gitignored or in `.claude/`, do nothing. If the file is `.gitignore`, run the gitignore protection check (see below) before any other step.
-2. **Update same folder**: regenerate the file's entry in its folder's `.folder-context.md` (full detail if source code, list-only entry if non-source). Update `context_updated` and, for source files, `last_modified` in the frontmatter.
+2. **Update same folder**: regenerate the file's entry in its folder's `.folder-context.md` (full detail if source code, list-only entry if non-source). Update `context_updated` to now, and for source files set `last_modified` to the file's **actual mtime from the filesystem** — run `stat` (or equivalent) on the file and use that value exactly. Never guess, round, or use the current time as a substitute.
 3. **Cascade up**: for each parent folder up to the project root, update the subfolder description in that parent's `.folder-context.md` if it changed. Stop cascading if unchanged.
 4. **Drain dirty list**: read `.claude/pending-context-updates.txt`. For any file not already handled in this cycle, update its folder's .folder-context.md. Clear the file after processing.
 
@@ -128,7 +128,11 @@ The hook script (`mark-context-dirty.py`) handles this automatically for any `.g
 
 ## Staleness Check
 
-Only source code files are tracked in frontmatter timestamps. For each `.folder-context.md`, compare each tracked file's `last_modified` to its actual mtime. If any file is newer, the .folder-context.md is stale — regenerate it.
+Only source code files are tracked in frontmatter timestamps. For each `.folder-context.md`, compare each tracked file's `last_modified` to its actual mtime on disk (via `stat`). If any file is newer, the .folder-context.md is stale.
+
+When resolving staleness, use judgment:
+- If the file content has changed since the description was written — regenerate the full entry.
+- If the description is still accurate and only the timestamp is behind — update `last_modified` to the actual mtime without rewriting the entry.
 
 Run the staleness check:
 - On skill invocation
@@ -253,3 +257,4 @@ Nine commands extend the skill for navigation, annotation, health checks, and st
 | Re-running setup on subsequent invocations | Check `.claude/context-manager.json` first |
 | Loading all .folder-context.md files at session start | Root first, navigate down by relevance |
 | Updating .folder-context.md for .folder-context.md edits | Skip paths ending in `.folder-context.md` |
+| Guessing or rounding `last_modified` timestamps | Always run `stat` on the file and use the exact mtime — never approximate |
