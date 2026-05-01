@@ -55,21 +55,28 @@ Within the same rank, sort by folder depth ascending (root folders first).
 
 ## Display Format
 
+Output the results inside a fenced code block (` ``` `) so plain spaces are preserved for alignment. Do not use `&nbsp;` or other HTML entities.
+
 ```
 Search: "authentication"  —  4 matches
-
+---
 src/auth/                          [folder]
+
   Handles user authentication, session management, and token validation.
 
 src/auth/auth.ts                   [exports, role]
+
   Role: Entry point for all auth flows — login, logout, refresh
   Exports: AuthService, createSession(), validateToken()
 
 src/middleware/auth-guard.ts       [key logic]
+
   Key logic: Validates JWT on every request; skips public routes in auth.config.json
 
 src/api/routes/users.ts            [wip]
+
   WIP: Auth middleware not yet wired to these routes
+---
 ```
 
 Show the matched field(s) only — not the entire file entry. Label which fields matched in brackets.
